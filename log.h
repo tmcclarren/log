@@ -2,6 +2,7 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/time.h>
 #include <syslog.h>
 #include <unistd.h>
 #include <fcntl.h>
@@ -15,8 +16,6 @@
 #include <fstream>
 #include <iostream>
 #include <map>
-
-#include "time.h"
 
 // ARGH not thread-safe... LAM
 
@@ -297,10 +296,9 @@ inline void LogFileCollector::restart()
 
 inline std::string timestamp()
 {
-    Time now;
-    now.now();
-
-    struct tm* t = now.localtime();
+    struct timeval tod;
+    gettimeofday(&tod, NULL);
+    struct tm* t = localtime(&tod.tv_sec);
     char buffer[256];
     // YYYYMMDD-HH:MM:SS.mmm
     snprintf(buffer, sizeof(buffer), "%4d%02d%02d %02d:%02d:%02d%s%03d"
@@ -311,7 +309,7 @@ inline std::string timestamp()
              , t->tm_min
              , t->tm_sec
              , "."
-             , (int)now.millis()
+             , (int)(tod.tv_usec / 1000)
              );
     return buffer;
 }
